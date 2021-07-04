@@ -54,4 +54,20 @@ Warning:
   create/update/delete его запросов пропадает
 
 
-Пока все, все остальное очень понятно и не думаю что требует внимания
+# Инструкция по разворачиванию проекта у себя на компьютере
+    
+    1) В проекте используется база данных postgresql поэтому надо ее создать
+        CREATE DATABASE test_task_db;
+    
+    2) Провести миграции:
+        Приложения указать обязательно !
+        python manage.py makemigrations interview user
+        python manage.py migrate
+    
+    3) Создать пользователя:
+        python manage.py createsuperuser 
+        
+    4) Запустить проект
+        python manage.py runserver
+        
+Наслждайтесь :)
