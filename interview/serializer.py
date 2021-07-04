@@ -3,6 +3,8 @@ from interview.models import Interview, Question, Answer, Choice
 from user.serializer import UserSerializer
 
 
+# Внимание ! Я ставлю так serializers для того чтобы на стороне клиента было меньше запросов. Советую всем делать также
+
 # Сериализатор модели варианта ответа
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,11 +64,15 @@ class AnswerSerializer(serializers.ModelSerializer):
 class FilterUserCompletedAnswerSerializer(serializers.ListSerializer):
 
     def to_representation(self, data):
+        # Помните context={} который я передал в user completed polls в CompletedInterviewsSerializer
+        # Теперь я беру его здесь для фильтрации по user_id
+        # Это нужно для того чтобы пользователь видел только его ответы на вопросы
         data = data.filter(user_id=self.context['pk'])
         return super(FilterUserCompletedAnswerSerializer, self).to_representation(data)
 
 
 # Сериализатор модели ответов пройденных опросов
+# list_serializer_class  как фильтр данных в данном случае
 class CompletedAnswerSerializer(serializers.ModelSerializer):
     user_item = UserSerializer(
         many=False,

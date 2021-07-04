@@ -20,11 +20,15 @@ class Interview(models.Model):
     description = models.TextField(
         verbose_name='Описание',
     )
+    # Пользователи которые прошли опрос
     surveyed = models.ManyToManyField(
         'user.User',
         verbose_name='Прошедшие опрос',
         related_name='surveyed'
     )
+
+    def __str__(self):
+        return str(self.title)
 
 
 # Модель вопроса
@@ -44,6 +48,9 @@ class Question(models.Model):
         choices=QUESTION_TYPES
     )
 
+    def __str__(self):
+        return str(self.text)
+
 
 # Модель варианта ответа
 class Choice(models.Model):
@@ -56,6 +63,9 @@ class Choice(models.Model):
     text = models.TextField(
         verbose_name='Текст'
     )
+
+    def __str__(self):
+        return str(self.text)
 
 
 # Модель ответа
@@ -85,3 +95,6 @@ class Answer(models.Model):
         verbose_name='Выбранный вариант ответа',
         blank=True,
     )
+
+    def __str__(self):
+        return str(self.value)

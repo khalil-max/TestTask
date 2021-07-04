@@ -11,6 +11,7 @@ from user.models import User
 from user.serializer import UserSerializer
 
 
+# ViewSet пользователей
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
@@ -26,6 +27,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def completed_polls(self, request, pk):
+        '''
+        1) Беру pk и фильтрую есть ли такой user прошедших опрос, функция детальная потому что надо брать пройденные опросы одного пользователя.
+        2) Сериализую передаю в контест pk пользователя для того чтобы потом профильтровать его в serializers.
+        '''
         interview = Interview.objects.prefetch_related('question', 'question__answers').filter(
             surveyed__in=[pk]
         )
@@ -34,6 +39,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def active_interview(self, request, pk=None):
+        '''
+            Активные опросы, беру те у которых есть start_time
+        '''
         interview = Interview.objects.prefetch_related('question').filter(
             start_time__isnull=False
         )
@@ -41,6 +49,9 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
+        '''
+            Возможность регистраци в api
+        '''
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -57,6 +68,10 @@ class UserViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
+        '''
+            Также возможность update
+        '''
+
         try:
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=request.data,

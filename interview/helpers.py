@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from interview.models import Interview
 
 
+# Кастомная пагинация
+# Пригодится лучше сделать чем не сделать
 class CustomPagination(pagination.PageNumberPagination):
     page_size_query_param = 'limit'
 
@@ -33,6 +35,8 @@ def check_interview_start_time(self, request):
         id=request.data.get('interview')
     )
 
+    # Если у interview есть start_time посылаю куда подальше
+    # Правило kiss - Keep, it simple stupid !
     if not interview.start_time:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -47,8 +51,9 @@ def check_interview_start_time(self, request):
         })
 
 
-# Класс для post/put/delete только администратору
-
+# Класс permissions для post/put/delete только администратору
+# А остальным пользователям только get
+# Нету в DRF permissions поэтому сделал свой
 class IsAdminUserOrReadOnly(IsAdminUser):
 
     def has_permission(self, request, view):

@@ -11,6 +11,7 @@ from interview.serializer import InterviewSerializer, ChoiceSerializer, \
     QuestionSerializer, AnswerSerializer
 
 
+# ViewSet опрсов
 class InterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     queryset = Interview.objects.prefetch_related('question', 'surveyed')
@@ -23,6 +24,42 @@ class InterviewViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'post'])
     def interview(self, request, pk):
+
+        '''
+        Action самого процесса опроса,
+        Нужно отправлять по структуре
+        /api/v1/interview/{id}/interview/
+        При get:
+            Interview взятый по id
+                Questions вопросы опроса
+                    Choices варианты ответов
+        При post:
+             Параметры которые нужно отправить:
+                user:int - id пользователя
+                anonymously:boolean - Анонимный ли запрос
+                answers:list - Ответы
+        '''
+
+        '''
+        Пример запроса:
+            {
+                "user": 1,
+                "anonymously": false,
+                "answers": [
+                # Один обьект answer т.е ответ на один вопрос
+                    {
+                        # Вариант/ы смотря на question_type ответа
+                        "choices": [1],
+                        # Сам вопрос, question_type нужно передавать для того чтобы запросы не клонировались
+                        "question": {
+                                    "id": 1,
+                                    "question_type": 1
+                                     } 
+                   },
+                #############
+              ]
+            }
+        '''
         query = Interview.objects.prefetch_related('question').get(pk=pk)
         serializer = InterviewSerializer(query, many=False)
         if query.start_time:
@@ -63,6 +100,10 @@ class InterviewViewSet(viewsets.ModelViewSet):
                         "error": True,
                         "msg": "Не добалено поле user или answers"
                     })
+        else:
+            return Response({
+                'msg': "Опрос еще не активен"
+            })
         return Response(serializer.data)
 
 
@@ -79,16 +120,20 @@ class QuestionViewSet(viewsets.ModelViewSet):
         filters.SearchFilter
     )
 
+    # Закрываю доступ на create после start_time у interview
+    # Смотри на функцию ниже ! Использую функцию повторно не нарушаю DRY !
     def create(self, request, *args, **kwargs):
         return check_interview_start_time(self, request)
 
     def update(self, request, *args, **kwargs):
         return check_interview_start_time(self, request)
 
+    # У одной функции одно назначение и все !
+    # Поэтому destroy прописал отдельно
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         interview = Interview.objects.get(
-            pk=request.data.get('interview')
+            pk=instance.interview.pk
         )
         if not interview.start_time:
             self.perform_destroy(instance)
@@ -100,6 +145,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
             })
 
 
+# ViewSet для вариантов ответа
 class ChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = ChoiceSerializer
     queryset = Choice.objects.select_related('question')
@@ -114,6 +160,7 @@ class ChoiceViewSet(viewsets.ModelViewSet):
     )
 
 
+# ViewSet для вариантов ответов
 class AnswerViewSet(viewsets.ModelViewSet):
     serializer_class = AnswerSerializer
     queryset = Answer.objects.select_related('user', 'question')
