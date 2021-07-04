@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -24,7 +25,7 @@ SECRET_KEY = 'django-insecure-gl#a^+=nm4m*$9^ol^+&xaq#+tu@698b%u64)72&5yhmvk+jg&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
+    'drf_yasg',
     'django_filters',
     'interview',
     'user',
@@ -76,10 +78,15 @@ WSGI_APPLICATION = 'TestTask.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'test_task_db',
+        'USER': 'postgres',
+        'PASSWORD': '123',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
@@ -133,12 +140,21 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': ['interview.helpers.IsAdminUserOrReadOnly'],
     'DEFAULT_PAGINATION_CLASS': 'interview.helpers.CustomPagination',
-    'PAGE_SIZE': 15
+    'PAGE_SIZE': 15,
 }
 
 AUTH_USER_MODEL = 'user.User'
 
 REST_AUTH_SERIALIZERS = {
     'TOKEN_SERIALIZER': 'user.serializer.TokenSerializer',
+    "LOGIN_SERIALIZER": "user.serializer.CustomLoginSerializer",
+    'USER_DETAILS_SERIALIZER': 'user.serializer.CustomUserDetailsSerializer'
 }
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

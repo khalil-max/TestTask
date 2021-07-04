@@ -1,6 +1,5 @@
 from rest_framework import pagination, status
-from rest_framework.permissions import SAFE_METHODS, \
-    BasePermission
+from rest_framework.permissions import SAFE_METHODS, IsAdminUser
 from rest_framework.response import Response
 
 from interview.models import Interview
@@ -49,9 +48,9 @@ def check_interview_start_time(self, request):
 
 
 # Класс для post/put/delete только администратору
-class IsAdminUserOrReadOnly(BasePermission):
+
+class IsAdminUserOrReadOnly(IsAdminUser):
+
     def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:
-            return True
-        else:
-            return request.user.is_staff
+        is_admin = super().has_permission(request, view)
+        return request.method in SAFE_METHODS or is_admin

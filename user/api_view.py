@@ -1,9 +1,12 @@
 from rest_framework import viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from interview.helpers import CustomPagination
+from interview.models import Interview
+from interview.serializer import InterviewSerializer, CompletedInterviewsSerializer
 from user.models import User
 from user.serializer import UserSerializer
 
@@ -20,6 +23,22 @@ class UserViewSet(viewsets.ModelViewSet):
         DjangoFilterBackend,
         filters.SearchFilter
     )
+
+    @action(detail=True, methods=['get'])
+    def completed_polls(self, request, pk):
+        interview = Interview.objects.prefetch_related('question', 'question__answers').filter(
+            surveyed__in=[pk]
+        )
+        serializer = CompletedInterviewsSerializer(interview, many=True, context={'pk': pk})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def active_interview(self, request, pk=None):
+        interview = Interview.objects.prefetch_related('question').filter(
+            start_time__isnull=False
+        )
+        serializer = InterviewSerializer(interview, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         try:

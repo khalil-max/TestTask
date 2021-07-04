@@ -3,25 +3,39 @@ from interview.models import Interview, Question, Answer, Choice
 from user.serializer import UserSerializer
 
 
-# Сериализатор модели опроса
-class InterviewSerializer(serializers.ModelSerializer):
+# Сериализатор модели варианта ответа
+class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Interview
-        fields = 'id', 'title', 'start_time', 'end_time', 'description'
+        model = Choice
+        fields = 'id', 'question', 'text'
 
 
 # Сериализатор модели вопроса
 class QuestionSerializer(serializers.ModelSerializer):
-    interview_item = InterviewSerializer(
-        many=False,
-        source='interview',
-        read_only=True
+    choices = ChoiceSerializer(
+        many=True,
+        read_only=True,
+        source='choice'
     )
 
     class Meta:
         model = Question
-        fields = 'id', 'interview', 'interview_item', \
-                 'text', 'question_type'
+        fields = 'id', 'interview', \
+                 'text', 'question_type', 'choices'
+
+
+# Сериализатор модели опроса
+class InterviewSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(
+        many=True,
+        read_only=True,
+        source='question'
+    )
+
+    class Meta:
+        model = Interview
+        fields = 'id', 'title', 'start_time', \
+                 'end_time', 'description', 'questions', 'surveyed'
 
 
 # Сериализатор модели ответа
@@ -31,27 +45,70 @@ class AnswerSerializer(serializers.ModelSerializer):
         read_only=True,
         source='user',
     )
-
-    question_item = QuestionSerializer(
-        many=False,
-        source='question',
-        read_only=True
+    choices_items = ChoiceSerializer(
+        many=True,
+        read_only=True,
+        source='choices'
     )
 
     class Meta:
         model = Answer
         fields = 'id', 'user', 'user_item', 'question', \
-                 'question_item', 'anonymously', 'value'
+                 'anonymously', 'value', \
+                 'choices', 'choices_items'
 
 
-# Сериализатор модели варианта ответа
-class ChoiceSerializer(serializers.ModelSerializer):
-    question_item = QuestionSerializer(
+# Фильтрация ответов по пользователю
+class FilterUserCompletedAnswerSerializer(serializers.ListSerializer):
+
+    def to_representation(self, data):
+        data = data.filter(user_id=self.context['pk'])
+        return super(FilterUserCompletedAnswerSerializer, self).to_representation(data)
+
+
+# Сериализатор модели ответов пройденных опросов
+class CompletedAnswerSerializer(serializers.ModelSerializer):
+    user_item = UserSerializer(
         many=False,
-        source='question',
-        read_only=True
+        read_only=True,
+        source='user',
+    )
+    choices_items = ChoiceSerializer(
+        many=True,
+        read_only=True,
+        source='choices'
     )
 
     class Meta:
-        model = Choice
-        fields = 'id', 'question', 'question_item', 'text'
+        model = Answer
+        fields = 'id', 'user', 'user_item', 'question', \
+                 'anonymously', 'value', \
+                 'choices', 'choices_items'
+        list_serializer_class = FilterUserCompletedAnswerSerializer
+
+
+# Сериализатор модели вопроса
+class CompletedQuestionsSerializer(serializers.ModelSerializer):
+    answers = CompletedAnswerSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = Question
+        fields = 'id', 'interview', \
+                 'text', 'question_type', 'answers'
+
+
+# Сериализатор модели пройденных опросов
+class CompletedInterviewsSerializer(serializers.ModelSerializer):
+    questions = CompletedQuestionsSerializer(
+        many=True,
+        read_only=True,
+        source='question'
+    )
+
+    class Meta:
+        model = Interview
+        fields = 'id', 'title', 'start_time', \
+                 'end_time', 'description', 'questions', 'surveyed'

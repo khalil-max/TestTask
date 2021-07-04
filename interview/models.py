@@ -20,6 +20,11 @@ class Interview(models.Model):
     description = models.TextField(
         verbose_name='Описание',
     )
+    surveyed = models.ManyToManyField(
+        'user.User',
+        verbose_name='Прошедшие опрос',
+        related_name='surveyed'
+    )
 
 
 # Модель вопроса
@@ -46,6 +51,7 @@ class Choice(models.Model):
         Question,
         verbose_name='Вопрос',
         on_delete=models.CASCADE,
+        related_name='choice'
     )
     text = models.TextField(
         verbose_name='Текст'
@@ -63,6 +69,7 @@ class Answer(models.Model):
         Question,
         verbose_name='Опрос',
         on_delete=models.CASCADE,
+        related_name='answers',
     )
     anonymously = models.BooleanField(
         verbose_name='Анонимно',
@@ -70,4 +77,11 @@ class Answer(models.Model):
     )
     value = models.TextField(
         verbose_name='Значение',
+        null=True,
+        blank=True
+    )
+    choices = models.ManyToManyField(
+        Choice,
+        verbose_name='Выбранный вариант ответа',
+        blank=True,
     )

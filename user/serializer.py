@@ -1,3 +1,4 @@
+from rest_auth.serializers import LoginSerializer
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
@@ -13,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
                  'password'
 
 
+# Сериализатор токена
 class TokenSerializer(serializers.ModelSerializer):
     user_item = UserSerializer(
         many=False,
@@ -23,3 +25,16 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Token
         fields = 'key', 'user', 'user_item'
+
+
+# Кастомный сериализатор входа в сиситему
+class CustomLoginSerializer(LoginSerializer):
+    email = None
+
+
+# Кастомный сериализатор для swagger
+class CustomUserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username',)
+        read_only_fields = ('username',)

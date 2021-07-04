@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from TestTask.router import DefaultRouter
+from .router import DefaultRouter
 from interview.api_url import router as interview_url
 from user.api_url import router as user_url
+from .yasg import urlpatterns as doc_url
 
 router = DefaultRouter()
 router.extend(interview_url)
@@ -28,3 +29,5 @@ urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/rest-auth/', include('rest_auth.urls')),
 ]
+
+urlpatterns += doc_url
